@@ -1,0 +1,214 @@
+================================================================================
+                      Anonymizer v6.1 – MQXLIFF/TMX
+================================================================================
+
+WHAT IS ANONYMIZER?
+-------------------
+Anonymizer is a tool for anonymizing MQXLIFF/TMX documents exported from memoQ.
+It automatically detects and replaces sensitive information in translations
+of clinical trials, pharmaceutical, and biomedical documents.
+
+
+HOW TO USE THE PROGRAM
+----------------------
+1. Run Anonymizer.exe (or Anonymizer.bat if Python is installed)
+2. Upload one or more .mqxliff files
+3. Configure options in the sidebar
+4. Review the preview of changes
+5. Download the anonymized files
+
+================================================================================
+                       ANONYMIZATION FILTERS
+================================================================================
+
+The program has 4 detection layers that you can enable/disable:
+
+1. REGEX CLINICAL IDs
+   ------------------
+   Detects structured identifiers using text patterns:
+   
+   - Clinical trial IDs: NCT12345678, EudraCT 2024-001234-12, ISRCTN, etc.
+   - Protocol IDs: PROTO-2024-001, ABC-123-ES
+   - Subject/patient IDs: Subject 001, Patient-0015
+   - Clinical dates: Visit 1, Day 28, Screening, Q1 2024
+   - Site codes: Site 0015, Center 123, 001-ES-Madrid
+   - Lot codes: LOT-2024-001, Batch#ABC123
+   - Approvals: IRB#12345, FDA IND, CEIC
+   - Age ranges: 18-65 years, pediatric 6-17
+   - Spanish IDs: NIF, CIF, DNI, NIE (with hyphen support, e.g. 45678912-X)
+   - License plates: Spanish current (1234 ABC) and legacy (M 1234 ABC)
+   - Long numeric IDs: sequences of 6+ digits (phone numbers, SSN, patient IDs)
+   
+   Also includes "Lowercase Validation":
+   - Scans the entire document for lowercase words
+   - If a word appears lowercase anywhere, it is NOT a proper noun
+   - Example: "Biological is..." + "biological process" = "Biological" is NOT anonymized
+   - Prevents false positives for common capitalized words
+
+2. PRESIDIO (PII)
+   ---------------
+   Presidio is a Microsoft library for detecting personal information:
+   
+   - PERSON: Person names (Dr. Garcia, Maria Lopez)
+   - EMAIL: Email addresses (user@company.com)
+   - PHONE_NUMBER: Phone numbers (+34 612 345 678, Tel: 555-1234)
+   - URL: Web addresses (https://example.com)
+   - IP_ADDRESS: IP addresses (192.168.1.1)
+   - IBAN_CODE: Bank account numbers
+   
+   Note: Presidio analyzes text using AI to detect
+   entities even when they do not follow fixed patterns.
+
+3. BIOMEDICAL ENTITIES
+   -------------------
+   Detects company, product, and organization names in the sector:
+   
+   PHARMACEUTICAL COMPANIES (Top 50):
+   - Pfizer, Novartis, Roche, Johnson & Johnson, Merck, AbbVie, 
+   - Sanofi, AstraZeneca, GSK, Bristol Myers Squibb, Eli Lilly, etc.
+   
+   CROs (Contract Research Organizations):
+   - IQVIA, ICON, Syneos Health, PPD, Parexel, Covance, etc.
+   
+   BLOCKBUSTER DRUGS:
+   - Keytruda, Humira, Ozempic, Dupixent, Eliquis, Jardiance, etc.
+   
+   CLINICAL PLATFORMS:
+   - Veeva Vault, Medidata Rave, Oracle Clinical, TrialMaster, etc.
+   
+   CENTRAL LABORATORIES:
+   - Q2 Solutions, Labcorp, Covance Labs, ICON Central Labs, etc.
+   
+   HOSPITALS AND MEDICAL CENTERS:
+   - University Hospital, Mayo Clinic, Johns Hopkins, NHS, etc.
+   
+   MEDICAL DEVICES:
+   - Medtronic, Boston Scientific, da Vinci, pacemakers, stents, etc.
+   
+   TECHNOLOGY COMPANIES (200+):
+   - Microsoft, Google, Apple, Amazon, Oracle, SAP, Salesforce, etc.
+   - Includes software, hardware, cloud services, and more
+   
+   NAMES WITH REGISTERED TRADEMARKS:
+   - Detects names followed by (R), TM, or (c)
+   - Example: "Pfizer(R)", "Product(TM)"
+
+4. CUSTOM DICTIONARY
+   -----------------
+   Allows adding specific terms you want to anonymize.
+   Enter each term on a separate line in the text field.
+   Useful for internal project names or specific terminology.
+
+5. PROTECTED TERMS
+   ---------------
+   Protected Terms (whitelist) to prevent specific terms from being anonymized
+
+================================================================================
+              INTELLIGENT FALSE POSITIVE FILTERING
+================================================================================
+
+Anonymizer includes automatic filters to avoid anonymizing incorrect words:
+
+GRAMMATICAL ANALYSIS FILTER (enabled with "ScispaCy")
+-----------------------------------------------------
+The program analyzes each word to determine its type:
+- NOUN = Noun (house, document)
+- PROPN = Proper noun (Microsoft, Maria)
+- VERB = Verb (process, specialize)
+- ADV = Adverb (quickly)
+- ADJ = Adjective (clinical, large)
+
+Only proper nouns (PROPN) and nouns (NOUN) that appear to be
+company or product names are anonymized.
+Verbs and adverbs are NOT anonymized.
+
+This avoids false positives such as:
+- "processed" → VERB → NOT anonymized
+- "specialized" → VERB → NOT anonymized
+- "Microsoft" → PROPN → anonymized
+
+LOWERCASE VALIDATION FILTER (enabled with "Regex clinical IDs")
+---------------------------------------------------------------
+Scans the entire document for lowercase words.
+If a word appears lowercase in any segment, it is not a proper noun.
+
+Example:
+- Segment 1: "The biological process is important"
+- Segment 2: "Biological is a technical term"
+
+Since "biological" appears lowercase in Segment 1,
+the program knows it is NOT a proper noun and does NOT anonymize
+"Biological" in Segment 2.
+
+SUMMARY: WHICH CHECKBOX ENABLES EACH FILTER
+-------------------------------------------
+| Checkbox           | Filter Enabled                          |
+|--------------------|------------------------------------------|
+| Regex clinical IDs | Lowercase document validation            |
+| ScispaCy           | Grammatical analysis (verbs, adverbs)    |
+| Presidio           | Common name filtering (with Regex IDs)   |
+
+RECOMMENDATION: Keep "Regex clinical IDs" and "ScispaCy" enabled
+for the best protection against false positives.
+
+================================================================================
+                        TECHNOLOGIES USED
+================================================================================
+
+SPACY
+-----
+spaCy is a natural language processing (NLP) library.
+Anonymizer uses the "en_core_web_lg" model (English) to:
+- Analyze grammatical structure
+- Identify whether a word is a noun, verb, adjective, etc.
+- Detect proper nouns (PROPN) vs common words
+
+SCISPACY
+--------
+SciSpaCy is a spaCy extension for biomedical texts.
+Anonymizer uses the "en_ner_bc5cdr_md" model to detect:
+- CHEMICAL: Chemical compound and drug names
+- DISEASE: Disease and medical condition names
+
+PRESIDIO
+--------
+Microsoft Presidio is a data anonymization framework.
+It uses machine learning models to detect
+personally identifiable information (PII)
+even when it does not follow fixed patterns.
+
+LXML
+----
+Library for processing XML/XLIFF files.
+Preserves document structure and inline tags such as <ph/>, <g>, etc.
+
+================================================================================
+                        ADDITIONAL OPTIONS
+================================================================================
+
+REPLACEMENT TOKEN
+-----------------
+Default is "REDACTED". You can change it to any text.
+Example: "[ANONYMIZED]", "***", "XXX"
+
+SHORT SEGMENT EXCLUSION
+-----------------------
+Excludes short anonymized segments from the output.
+Only segments that were actually anonymized are excluded.
+The minimum word count is configurable (default: 5 words).
+
+TM EXCLUSION THRESHOLD
+---------------------
+Allows excluding heavily anonymized segments from the translation memory.
+If more than X% of a segment is redacted (default 50%, configurable),
+it is marked for exclusion.
+Useful to avoid contaminating the TM with low-value segments.
+Both source and target are always processed.
+
+================================================================================
+                               SUPPORT
+================================================================================
+
+Developed for translators and localization teams.
+
+================================================================================

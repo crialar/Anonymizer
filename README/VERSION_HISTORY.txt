@@ -1,0 +1,128 @@
+================================================================================
+                  ANONYMIZER – Version History
+================================================================================
+
+
+VERSION 1.0 – First functional release
+--------------------------------------
+- Creation of the application with a web interface for uploading MQXLIFF files.
+- Basic anonymization using three layers:
+    · Detection of clinical trial IDs (NCT, EudraCT).
+    · Detection of personal information (emails, URLs) with Presidio.
+    · Detection of biomedical entities (drugs, diseases)
+      using a biomedical language model (SciSpaCy).
+- Single-file processing.
+- Change preview (before/after) prior to download.
+- Preservation of the MQXLIFF XML structure, including internal tags
+  (<ph/>, <g>) required by memoQ for reimport.
+
+
+VERSION 2.0 – Detection improvements and intelligent filtering
+---------------------------------------------------------------
+- Expanded detection of clinical ID formats:
+    · ISRCTN, Protocol IDs (ABC-123-XYZ), Subject IDs, Site IDs,
+      Lot Numbers, Site Codes, Ethics Committees, Age ranges.
+- Detection of pharmaceutical companies (Top 50): Pfizer, Roche,
+  Novartis, AstraZeneca, Sanofi, etc.
+- Detection of CROs (Top 25): IQVIA, ICON, Syneos, Parexel, etc.
+- Detection of blockbuster drugs: Keytruda, Ozempic, Dupixent, etc.
+- Detection of clinical platforms: Veeva, Medidata, Oracle Clinical.
+- Detection of central laboratories: Q2 Solutions, Labcorp, etc.
+- Detection of investigator names, trial dates, and international addresses.
+- Detection of hospitals, medical centers, countries, and nationalities.
+- Detection of study names, randomization codes, and medical devices.
+- Detection of phone numbers, emails, postal codes, and birth dates
+  in multiple formats.
+- Detection of URLs from international clinical trial registries.
+- Intelligent filtering system to avoid over-anonymization:
+    · Word-type filter: only anonymizes nouns and proper nouns,
+      not verbs or common adjectives.
+    · Structured ID detection: requires specific patterns
+      (letters + numbers/hyphens).
+    · Density brake: if more than 35% of a segment would be anonymized,
+      switches to conservative mode.
+    · Lowercase validation: if a term appears in lowercase elsewhere
+      in the document, it is not anonymized.
+- Batch processing: upload and process multiple MQXLIFF files at once,
+  with ZIP download.
+
+
+VERSION 3.0 – Custom dictionary and offline package
+---------------------------------------------------
+- Custom dictionary: allows uploading a .txt file with
+  project-specific sensitive terms (product names, brands, etc.)
+  to be anonymized automatically.
+    · Accepts one term per line or comma-separated terms.
+    · Supports terms with special characters (®, ©, accents).
+- Detection of names with registered trademarks (™) and copyright (©).
+- Detection of 200+ technology, software, and hardware companies:
+    · Microsoft, Oracle, SAP, Salesforce, AWS, Google, Amazon,
+      Apple, Dell, Lenovo, Samsung, Sony, Meta, Tesla, Netflix, etc.
+- Automatic detection of capitalized product names
+  (commercial proper names).
+- Search bar in the preview to quickly find specific segments.
+- Creation of the offline Windows package:
+    · Automatic dependency installer (Dependencias.bat).
+    · Application launcher (Anonymizer.bat).
+    · Fully functional offline after installation.
+
+
+VERSION 4.0 – Bilingual processing and TM exclusion
+---------------------------------------------------
+- Full bilingual processing EN→ES:
+    · Presidio processes both English and Spanish segments.
+    · Terms detected in the source (EN) are automatically
+      propagated to the target (ES) and vice versa.
+- Translation Memory (TM) exclusion system:
+    · If a segment has more than 20% anonymized text,
+      it can be excluded from the translation memory.
+    · Prevents heavily modified segments from being imported into memoQ TM.
+    · Visual indicators: badges with anonymization percentage
+      and dotted red borders on excluded segments.
+    · Option to exclude/include each segment individually.
+- Term cache system for consistent anonymization:
+    · Once a name or term is detected, it is applied
+      consistently throughout the document.
+    · Case-insensitive comparison.
+    · Longer terms are applied first to avoid partial replacements.
+- Cleanup of previous version history in the MQXLIFF
+  to prevent unanonymized data in the internal history.
+- Preservation of memoQ RowHistory elements.
+- Detection of Spanish NIF, CIF, DNI, and NIE.
+
+
+VERSION 5.0 – English interface and precision improvements
+----------------------------------------------------------
+- Entire user interface translated into English.
+- Updated subtitle: "Anonymize bilingual memoQ documents (EN > ES)".
+- Improved detection of short segments: now anonymized correctly
+  instead of being ignored.
+- Detection of hyphenated study codes (e.g., ABC-1234-XYZ).
+- Improved preservation of inline tags when anonymized text
+  changes length compared to the original.
+- Improved phone number detection and refined logic
+  to avoid anonymizing entities unnecessarily.
+- Complete user manual included in the package.
+
+
+VERSION 6.0 – Symmetric anonymization, new detections, and .exe
+----------------------------------------------------------------
+- TM exclusion threshold now configurable (default 50%).
+- Created an .exe version of the program for one-click installation
+  and 100% offline setup with all packages pre-downloaded.
+  No Python installation required.
+- Added Protected Terms (whitelist) to prevent specific terms from being anonymized
+
+
+VERSION 6.1 – TMX support
+--------------------------
+- Added full TMX file format support:
+    · Upload and process .tmx files alongside .mqxliff files.
+    · TMX translation units (tu/tuv/seg) are parsed and anonymized
+      using the same 4-layer pipeline (Regex, Presidio, ScispaCy, Dictionary).
+    · Language detection via xml:lang attributes on tuv elements.
+    · All features work with TMX: preview, skip segments, TM exclusion,
+      short segment filtering, Excel report, batch processing.
+- Fix for error that was causing false positives.
+
+================================================================================

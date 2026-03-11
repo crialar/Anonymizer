@@ -1,0 +1,10 @@
+numpy<2.0.0
+streamlit>=1.28.0
+lxml>=4.9.0
+spacy>=3.7.0
+presidio-analyzer>=2.2.0
+presidio-anonymizer>=2.2.0
+openpyxl>=3.1.0
+https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.0/en_core_web_lg-3.7.0-py3-none-any.whl
+https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.7.0/es_core_news_md-3.7.0-py3-none-any.whl
+https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_ner_bc5cdr_md-0.5.4.tar.gz
