@@ -1,0 +1,400 @@
+================================================================================
+                      Anonymizer v6.2 – MQXLIFF/TMX
+================================================================================
+
+WHAT IS ANONYMIZER?
+-------------------
+Anonymizer is a tool for anonymizing and cleaning MQXLIFF/TMX documents
+exported from memoQ. It automatically detects and replaces sensitive
+information in translations of clinical trials, pharmaceutical, and
+biomedical documents, and produces a clean TMX for import into memoQ.
+
+It also includes an integrated QA Check tab that runs deterministic
+quality-assurance checks on a TMX or MQXLIFF file (xbench-style).
+
+
+HOW TO USE THE PROGRAM
+----------------------
+1. Open Anonymizer in your browser
+2. Upload one or more .mqxliff files
+3. Configure anonymization layers and filters in the sidebar
+4. Review the preview of changes
+5. Download the anonymized MQXLIFF files and/or clean TMX
+6. (Optional) Open the QA Check tab to validate any TMX/MQXLIFF
+
+================================================================================
+                       ANONYMIZATION LAYERS
+================================================================================
+
+The program has 6 detection layers that you can enable/disable independently:
+
+1. SAFE REGEX (enabled by default)
+   --------------------------------
+   High-precision multilingual patterns that detect structured PII with
+   virtually no false positives. Covers:
+
+   - Emails: user@company.com
+   - Phone numbers: international, local, labeled (Tel:, Teléfono:, etc.)
+   - URLs: https://..., domain.com, IP addresses
+   - Titled names: Dr. García, Mrs. Johnson, Prof. Schmidt, Herr Müller,
+     Monsieur Dupont, Dott. Rossi, Sr. Pérez, etc.
+   - Professional suffixes: Name, MD / PhD / PharmD / MBBS / FRCP, etc.
+   - Clinical role + name: Principal Investigator: Name, PI: Name, etc.
+   - Dates of birth: DOB, Date of Birth, Fecha de Nacimiento, Geburtsdatum,
+     Born on..., etc.
+   - Addresses: Street/Avenue/Calle/Rue/Via patterns, postal codes
+   - Clinical trial IDs: NCT, ISRCTN, jRCT, CTRI, ACTRN, ChiCTR, DRKS,
+     IRCT, UMIN, KCT, EU-CT
+   - National IDs: NIF/CIF/DNI/NIE (Spain), SSN/EIN (US), NINO/NHS (UK),
+     Sécurité Sociale (France), Codice Fiscale/P.IVA (Italy),
+     NIF/CC (Portugal), BSN (Netherlands), NISS (Belgium), AHV (Switzerland),
+     CPF/CNPJ (Brazil), CURP (Mexico), PPS (Ireland),
+     Shenfenzheng (China), My Number (Japan)
+   - Structured codes: multi-part codes (ABC-DEF-123), alphanumeric IDs
+   - IBAN, credit card numbers, Social Security (Spain)
+   - Trademark names: Keytruda®, Humira™ (with or without space before ®/™)
+   - Copyright notices: © 2024 Pfizer Inc.
+   - CJK patterns: Chinese/Japanese titled names, addresses, phone numbers
+
+2. CLINICAL ID REGEX (disabled by default)
+   ----------------------------------------
+   Additional patterns for clinical trial-specific identifiers:
+
+   - Protocol IDs: PROTO-2024-001, ABC-123-ES
+   - Subject/patient IDs: Subject 001, Patient-0015
+   - Clinical dates: Visit 1, Day 28, Screening, Q1 2024
+   - Site codes: Site 0015, Center 123, 001-ES-Madrid
+   - Lot codes: LOT-2024-001, Batch#ABC123
+   - Approvals: IRB#12345, FDA IND, CEIC
+   - Age ranges: 18-65 years, pediatric 6-17
+   - License plates: Spanish current (1234 ABC) and legacy (M 1234 ABC)
+   - Long numeric IDs: sequences of 6+ digits
+
+   Also includes "Lowercase Validation":
+   - Scans the entire document for lowercase words
+   - If a word appears lowercase anywhere, it is NOT a proper noun
+   - Example: "Biological is..." + "biological process" = not anonymized
+   - Prevents false positives for common capitalized words
+
+3. PRESIDIO (disabled by default)
+   --------------------------------
+   Microsoft Presidio library for AI-based PII detection:
+
+   - PERSON: Person names
+   - EMAIL: Email addresses
+   - PHONE_NUMBER: Phone numbers
+   - URL: Web addresses
+   - IP_ADDRESS: IP addresses
+   - IBAN_CODE: Bank account numbers
+
+   Note: Presidio uses AI models to detect entities even when they
+   do not follow fixed patterns. May produce false positives.
+
+4. SCISPACY (disabled by default)
+   --------------------------------
+   Biomedical entity detection using the SciSpaCy NLP model:
+
+   PHARMACEUTICAL COMPANIES (Top 50):
+   - Pfizer, Novartis, Roche, Johnson & Johnson, Merck, AbbVie,
+   - Sanofi, AstraZeneca, GSK, Bristol Myers Squibb, Eli Lilly, etc.
+
+   CROs (Contract Research Organizations):
+   - IQVIA, ICON, Syneos Health, PPD, Parexel, Covance, etc.
+
+   BLOCKBUSTER DRUGS:
+   - Keytruda, Humira, Ozempic, Dupixent, Eliquis, Jardiance, etc.
+
+   CLINICAL PLATFORMS:
+   - Veeva Vault, Medidata Rave, Oracle Clinical, TrialMaster, etc.
+
+   CENTRAL LABORATORIES:
+   - Q2 Solutions, Labcorp, Covance Labs, ICON Central Labs, etc.
+
+   MEDICAL DEVICES:
+   - Medtronic, Boston Scientific, da Vinci, pacemakers, stents, etc.
+
+   TECHNOLOGY COMPANIES (200+):
+   - Microsoft, Google, Apple, Amazon, Oracle, SAP, Salesforce, etc.
+
+   Includes grammatical analysis filter:
+   - Only proper nouns (PROPN) and nouns (NOUN) are anonymized
+   - Verbs and adverbs are NOT anonymized
+   - Prevents false positives like "processed" or "specialized"
+
+5. PROPER NAMES (disabled by default)
+   ------------------------------------
+   Structural person name detection using three complementary phases:
+
+   Phase 1 - Label-based detection:
+   Recognizes names following contextual labels such as Patient:,
+   Nombre:, Signed by:, PACIENTE:, etc.
+
+   Phase 2 - Initial + context detection:
+   Catches patterns like "J. García López" near relevant keywords.
+
+   Phase 3 - Word-walking scoring:
+   Evaluates capitalized word sequences against multilingual name/surname
+   lists (~834 entries across 7 languages: ES, EN, FR, DE, IT, PT, NL).
+   Requires a minimum confidence score to trigger anonymization.
+
+   Also detects hospital names (e.g., Hospital Universitario San Martín).
+
+   Built-in false positive safeguards:
+   - Scientific eponyms excluded (Glasgow, Poisson, Down, Bayes, etc.)
+   - Unit names adjacent to numbers excluded (20 newton, 300 kelvin)
+   - Generic document titles not anonymized
+
+6. CUSTOM DICTIONARY (enabled by default)
+   ----------------------------------------
+   Upload a TXT file with specific terms you want to anonymize.
+   Enter each term on a separate line or separated by commas.
+   Useful for internal project names, site names, or specific terminology.
+   Dictionary terms take priority over all other layers.
+
+================================================================================
+                     PROTECTED TERMS (WHITELIST)
+================================================================================
+
+Upload a TXT file with terms that should NEVER be anonymized.
+These terms will be preserved even if detected by any layer.
+One term per line or separated by commas.
+Useful for product names, study names, or terminology that should remain visible.
+
+================================================================================
+                          TMX FILTERS
+================================================================================
+
+DEDUPLICATE TMX SEGMENTS (enabled by default)
+----------------------------------------------
+Removes duplicate or similar segments from the clean TMX output.
+Similarity threshold is configurable:
+- 100% = exact match only (recommended for large files)
+- Lower values = fuzzy matching (catches near-duplicates)
+
+EXCLUDE SHORT SEGMENTS (enabled by default)
+---------------------------------------------
+Removes junk segments from the TMX: segments with fewer than the
+minimum word count (default: 2) or segments containing only
+numbers/symbols.
+
+EXCLUDE SHORT ANONYMIZED SEGMENTS (enabled by default)
+-------------------------------------------------------
+Excludes segments that are too short after anonymization.
+The minimum word count is configurable (default: 5 words).
+Only segments that were actually anonymized are evaluated.
+
+EXCLUDE HEAVILY ANONYMIZED (enabled by default)
+-------------------------------------------------
+Excludes segments where more than X% of the content has been
+anonymized (default threshold: 50%, configurable from 10% to 90%).
+Useful to avoid contaminating the TM with low-value segments
+where most of the text has been replaced.
+
+================================================================================
+                         QA CHECK TAB
+================================================================================
+
+The QA Check tab is an independent tool inside the same app. It runs
+deterministic quality-assurance checks on a TMX or MQXLIFF file —
+similar to xbench/Verifika — and lets you download a cleaned file with
+safe auto-fixes applied.
+
+HOW TO USE
+----------
+1. Open the "QA Check" tab.
+2. Either:
+   - Upload any TMX or MQXLIFF file directly, OR
+   - Click "Use anonymized output" to QA the file you just produced
+     in the Anonymizer tab (no need to download/re-upload).
+3. (Optional) In ⚙️ Configuration:
+   - Toggle individual checks on/off.
+   - Upload a forbidden-terms list (TXT, one term per line).
+   - Upload a glossary (TXT tab-separated or CSV with source,target columns).
+4. Click 🚀 Run QA.
+5. Review findings grouped by category. For any segment you can:
+   - Edit the target inline (saved as plain text — inline tags inside
+     the edited segment are dropped).
+   - Click ↺ Reset to revert.
+6. Download:
+   - 📥 Download cleaned file: applies enabled auto-fixes + your manual
+     edits. The XML structure, attributes, and canonical IDs from the
+     Anonymizer (<prop type="x-document">…</prop>) are preserved.
+   - 📰 Export HTML report: human-readable QA summary; manually edited
+     targets are flagged with an EDITED badge.
+
+THE 18 CHECKS (17 DEFAULT + 1 OPT-IN)
+-------------------------------------
+11 fully deterministic (zero false positives, all on by default):
+
+  Content        - Empty target
+  Terminology    - Forbidden terms in target
+                 - Glossary term not used
+  Structural     - Bracket / quote balance
+  Tags & inline  - Tag count mismatch
+                 - Broken / malformed tags
+  Special elem.  - URLs missing or altered
+                 - Emails missing or altered
+                 - Placeholders / variables
+  Whitespace     - Double spaces            (auto-fix on by default)
+                 - Leading/trailing spaces  (auto-fix on by default)
+
+6 xbench-style classics (high signal, may produce rare false positives,
+all on by default — toggle off in Configuration if noisy):
+
+  Content        - Untranslated segment
+                 - Invisible / control characters (auto-fix available)
+                 - Mixed scripts in same word
+  Special elem.  - Numbers differ source / target
+  Punctuation    - Repeated punctuation
+                 - Final punctuation differs
+
+1 spell-check (ON by default — untick in ⚙️ Configuration if too noisy):
+
+  Spelling       - Spelling (target)        Hunspell via spylls
+
+  How it works:
+  - Enabled out of the box. Spell-check on TM data can be noisy
+    (proper nouns, brand names, technical/clinical jargon) — use
+    the per-run ignore-words list to silence those, or untick the
+    Spelling checkbox to disable the category entirely.
+  - Auto-detects the target language from the file and maps it to the
+    closest LibreOffice variant (e.g. es-MX → es_MX, pt-AO → pt_PT,
+    en-IE → en_GB, iw → he_IL).
+  - 38 LibreOffice dictionaries supported. Pre-bundled in this .exe
+    (fully offline, no network needed): en_US, es_ES, fr_FR, de_DE,
+    it_IT. The other 33 are auto-downloaded the first time their
+    language is detected and cached locally under
+    %USERPROFILE%\.cache\anonymizer\dictionaries\ for offline reuse.
+    Languages outside the 38-entry map are silently skipped with a
+    notice; the rest of the QA run is unaffected.
+  - Misspellings appear highlighted in red+bold (matching the rest of
+    the QA highlights); the per-segment cap is 20, with a "… and N
+    more" suffix on longer segments.
+  - Ignore-words textarea right under the toggle: enter one word per
+    line for proper nouns, brand names, study acronyms, etc. Matching
+    is case-insensitive. Suppressed words don't reappear on Re-run QA
+    until you remove them from the list.
+  - Auto-fix is intentionally NOT offered — picking the right correction
+    for a translation memory entry is a human judgement.
+
+NOTES ON FALSE POSITIVES
+------------------------
+- "Numbers differ" extracts numeric tokens as-is. Reformatted dates
+  (e.g., "March 2, 1980" → "2/3/1980") will be flagged even when the
+  underlying value is identical. This is by design: any heuristic to
+  "understand" localized dates introduces more errors than it prevents.
+- "Final punctuation differs" can flag legitimate stylistic choices
+  (e.g., target rephrased without a trailing period). Treat as a hint.
+- All other checks are 100% deterministic.
+
+================================================================================
+                       ADDITIONAL OPTIONS
+================================================================================
+
+REPLACEMENT TOKEN
+-----------------
+Default is "███". You can change it to any text.
+Example: "[ANONYMIZED]", "***", "REDACTED"
+
+PREVIEW
+-------
+The Preview tab shows all processed segments with before/after comparison.
+- Search by text to find specific segments
+- Toggle "Show junk segments" to include/exclude short segments in preview
+- Individual segments can be excluded from TMX via checkboxes
+
+DUPLICATES
+-------
+- The Duplicates tab displays groups of duplicate or similar segments (based on the dedup threshold). 
+- Users can manually select which segment to keep in each group; by default, the first occurrence by 
+  upload order is retained.
+
+DOWNLOADS
+---------
+The Download tab provides:
+- Anonymized MQXLIFF files (for reimport into memoQ)
+- Clean TMX file (filtered, deduplicated, ready for TM import)
+- Excel report with anonymization statistics and excluded segments
+- All files bundled in a single ZIP download
+
+CANONICAL ID TRACEABILITY
+---------
+- Each TMX segment can be tagged with a canonical document identifier that appears in 
+  the memoQ LiveDocs "Document" metadata field, enabling full traceability from any segment 
+  back to its anonymization batch. 
+- Existing canonical IDs from previously processed files are automatically detected and preserved.
+- The QA Check tab's "Download cleaned file" preserves these canonical IDs as well.
+
+================================================================================
+                        LAYER OVERLAP BEHAVIOR
+================================================================================
+
+When multiple layers are enabled, they run sequentially in this order:
+Dictionary > Safe Regex > Clinical ID Regex > Presidio > ScispaCy > Proper Names
+
+If one layer anonymizes a term, subsequent layers will not re-detect it.
+This prevents double-counting and ensures accurate statistics.
+Each layer's detection count reflects only what it uniquely found.
+
+================================================================================
+                        TECHNOLOGIES USED
+================================================================================
+
+SPACY
+-----
+spaCy is a natural language processing (NLP) library.
+Anonymizer uses the "en_core_web_lg" model (English) to:
+- Analyze grammatical structure
+- Identify whether a word is a noun, verb, adjective, etc.
+- Detect proper nouns (PROPN) vs common words
+
+SCISPACY
+--------
+SciSpaCy is a spaCy extension for biomedical texts.
+Anonymizer uses the "en_ner_bc5cdr_md" model to detect:
+- CHEMICAL: Chemical compound and drug names
+- DISEASE: Disease and medical condition names
+
+PRESIDIO
+--------
+Microsoft Presidio is a data anonymization framework.
+It uses machine learning models to detect personally identifiable
+information (PII) even when it does not follow fixed patterns.
+
+LXML
+----
+Library for processing XML/XLIFF files.
+Preserves document structure and inline tags such as <ph/>, <g>, etc.
+
+================================================================================
+                        RECOMMENDED SETTINGS
+================================================================================
+
+For general use (low false positive risk):
+- Safe Regex: ON
+- Custom Dictionary: ON
+- All others: OFF
+
+For thorough anonymization (clinical trials):
+- Safe Regex: ON
+- Clinical ID Regex: ON
+- Proper Names: ON
+- Custom Dictionary: ON
+
+For maximum detection (review output carefully):
+- All layers: ON
+
+For QA Check after delivery:
+- Run with the 17 default checks first (spell-check stays OFF)
+- Disable "Numbers differ" only if your file has many reformatted dates
+- Enable "Spelling (target)" as a final pass when needed; build an
+  ignore-words list during the first run so the noise drops on re-run
+- Always review the HTML report before final delivery
+
+================================================================================
+                               SUPPORT
+================================================================================
+
+Developed for translators and localization teams.
+
+================================================================================
